@@ -28,6 +28,7 @@
 **Overall Assessment**: **Educational - Not Production Ready**
 
 KipuBank V3 demonstrates **strong security fundamentals** suitable for an educational project:
+
 - ✅ 99% test coverage with 42 comprehensive tests
 - ✅ Industry-standard security patterns (ReentrancyGuard, SafeERC20, CEI)
 - ✅ Comprehensive input validation via modifiers
@@ -38,15 +39,15 @@ KipuBank V3 demonstrates **strong security fundamentals** suitable for an educat
 
 ### Key Risks Identified
 
-| Risk | Severity | Status | Notes |
-|------|----------|--------|-------|
-| Mock Contract Centralization | 🔴 HIGH | ⚠️ By Design | Mock contracts controlled by deployer |
-| Owner Centralization | 🟡 MEDIUM | ⚠️ Accepted | Single owner controls whitelist & pause |
-| DEX Dependency | 🟡 MEDIUM | ✅ Mitigated | Slippage protection implemented |
-| Reentrancy | 🟢 LOW | ✅ Mitigated | ReentrancyGuard on all functions |
-| Integer Overflow/Underflow | 🟢 LOW | ✅ Mitigated | Solidity 0.8.24 checks + unchecked optimization |
-| Price Manipulation | 🟡 MEDIUM | ⚠️ Limited | Mock router uses fixed rates |
-| Front-Running | 🟡 MEDIUM | ⚠️ Inherent | Public mempool exposure |
+| Risk                         | Severity  | Status       | Notes                                           |
+| ---------------------------- | --------- | ------------ | ----------------------------------------------- |
+| Mock Contract Centralization | 🔴 HIGH   | ⚠️ By Design | Mock contracts controlled by deployer           |
+| Owner Centralization         | 🟡 MEDIUM | ⚠️ Accepted  | Single owner controls whitelist & pause         |
+| DEX Dependency               | 🟡 MEDIUM | ✅ Mitigated | Slippage protection implemented                 |
+| Reentrancy                   | 🟢 LOW    | ✅ Mitigated | ReentrancyGuard on all functions                |
+| Integer Overflow/Underflow   | 🟢 LOW    | ✅ Mitigated | Solidity 0.8.24 checks + unchecked optimization |
+| Price Manipulation           | 🟡 MEDIUM | ⚠️ Limited   | Mock router uses fixed rates                    |
+| Front-Running                | 🟡 MEDIUM | ⚠️ Inherent  | Public mempool exposure                         |
 
 ### Audit Status
 
@@ -67,22 +68,25 @@ KipuBank V3 demonstrates **strong security fundamentals** suitable for an educat
 **Risk Level**: 🟢 **LOW** (Mitigated)
 
 #### Attack Scenario
+
 Malicious contract could attempt to re-enter deposit/withdraw functions before state updates complete.
 
 #### Mitigation Implemented
 
 ✅ **ReentrancyGuard**: All state-changing functions protected
+
 ```solidity
-function depositETH() 
-    external 
-    payable 
+function depositETH()
+    external
+    payable
     nonReentrant  // ← Protection
-    whenNotPaused 
-    validAmount(msg.value) 
+    whenNotPaused
+    validAmount(msg.value)
 { ... }
 ```
 
 ✅ **Checks-Effects-Interactions Pattern**: State updated before external calls
+
 ```solidity
 // Effects: Update state in unchecked block FIRST
 unchecked {
@@ -96,6 +100,7 @@ emit DepositMade(msg.sender, address(0), msg.value, usdcReceived);
 ```
 
 ✅ **Test Coverage**: Dedicated reentrancy test
+
 ```solidity
 function test_Security_ReentrancyProtection() public { ... }
 ```
@@ -109,15 +114,17 @@ function test_Security_ReentrancyProtection() public { ... }
 **Risk Level**: 🟡 **MEDIUM** (Limited for Mock Contracts)
 
 #### Attack Scenario
+
 Attacker manipulates Uniswap pool reserves to get favorable swap rates.
 
 #### Current State (Mock Contracts)
 
 ⚠️ **Mock Router Uses Fixed Rates**:
+
 ```solidity
 // MockUniswapV2Router.sol
-function getAmountsOut(uint amountIn, address[] memory path) 
-    public view returns (uint[] memory) 
+function getAmountsOut(uint amountIn, address[] memory path)
+    public view returns (uint[] memory)
 {
     if (path[0] == weth && path[1] == usdc) {
         // Fixed: 1 ETH = 2000 USDC
@@ -131,6 +138,7 @@ function getAmountsOut(uint amountIn, address[] memory path)
 #### Production Deployment Risk
 
 🔴 **HIGH RISK** with real Uniswap:
+
 - Flash loan attacks could manipulate pool reserves
 - Low liquidity tokens susceptible to price impact
 - MEV bots could extract value
@@ -138,17 +146,20 @@ function getAmountsOut(uint amountIn, address[] memory path)
 #### Mitigation for Production
 
 ✅ **Slippage Protection Implemented** (2%):
+
 ```solidity
 uint256 amountOutMin = (expectedOutput * SLIPPAGE_TOLERANCE) / 100;
 // SLIPPAGE_TOLERANCE = 98 (allows 2% deviation)
 ```
 
 ✅ **Deadline Enforcement** (15 minutes):
+
 ```solidity
 block.timestamp + 900  // Prevents stale transactions
 ```
 
 ⚠️ **Needs Enhancement**:
+
 - [ ] TWAP (Time-Weighted Average Price) oracles
 - [ ] Minimum liquidity thresholds
 - [ ] Dynamic slippage based on pool depth
@@ -163,31 +174,35 @@ block.timestamp + 900  // Prevents stale transactions
 **Risk Level**: 🟡 **MEDIUM** (Centralized by Design)
 
 #### Attack Scenario
+
 Malicious or compromised owner performs unauthorized actions.
 
 #### Centralization Points
 
 ⚠️ **Single Owner Controls**:
+
 1. Token whitelist (add/remove)
 2. Deposit pause mechanism
 3. No withdrawal pause (intentional)
 4. No emergency fund extraction
 
 ```solidity
-function addSupportedToken(address token) 
-    external 
+function addSupportedToken(address token)
+    external
     onlyOwner { ... }  // ← Single point of control
 ```
 
 #### Mitigation Implemented
 
 ✅ **No User Fund Extraction**: Owner cannot withdraw user balances
+
 ```solidity
 // No function allows owner to withdraw user USDC
 // Only users can withdraw their own balances
 ```
 
 ✅ **Limited Pause Scope**: Only deposits can be paused (not withdrawals)
+
 ```solidity
 modifier whenNotPaused() {
     if (depositsPaused) revert DepositsArePaused();
@@ -197,6 +212,7 @@ modifier whenNotPaused() {
 ```
 
 ✅ **Owner Verification**: OpenZeppelin Ownable pattern
+
 ```solidity
 import "@openzeppelin/contracts/access/Ownable.sol";
 ```
@@ -204,11 +220,13 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 #### Residual Risk for Production
 
 🔴 **HIGH RISK** without improvements:
+
 - Single point of failure (private key compromise)
 - No community governance
 - Centralized emergency controls
 
 **Recommended for Production**:
+
 - [ ] Multi-sig wallet (Gnosis Safe) for owner
 - [ ] Timelock for admin functions (24-48 hours)
 - [ ] Decentralized governance (DAO)
@@ -225,11 +243,13 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 #### Integer Overflow/Underflow
 
 ✅ **MITIGATED**: Solidity 0.8.24 with automatic checks
+
 ```solidity
 pragma solidity 0.8.24; // Built-in overflow protection
 ```
 
 ✅ **Gas Optimization**: Safe unchecked blocks after validation
+
 ```solidity
 unchecked {
     balances[msg.sender] += usdcReceived;  // Safe: validated before
@@ -241,12 +261,14 @@ unchecked {
 #### Logic Errors
 
 ✅ **99% Test Coverage**: Comprehensive test suite
+
 - 42 tests across 7 categories
 - 100% line coverage
 - 93.75% branch coverage
 - Edge cases tested (zero amounts, limits, paused state)
 
 ✅ **Modifiers-Only Validation**: No inline checks
+
 ```solidity
 function withdraw(uint256 usdcAmount)
     external
@@ -268,6 +290,7 @@ function withdraw(uint256 usdcAmount)
 #### Gas Limit DoS
 
 ✅ **MITIGATED**: No unbounded loops
+
 - All mappings use direct access (O(1))
 - No iteration over user arrays
 - Fixed gas costs per transaction
@@ -275,6 +298,7 @@ function withdraw(uint256 usdcAmount)
 #### Bank Cap DoS
 
 ⚠️ **POSSIBLE**: First depositor could fill entire bank cap
+
 ```solidity
 if (totalDepositsUSDC + usdcReceived > bankCapUSD) {
     revert BankCapExceeded();
@@ -282,11 +306,13 @@ if (totalDepositsUSDC + usdcReceived > bankCapUSD) {
 ```
 
 **Impact**: Low severity (by design)
+
 - Bank cap is intentional limit
 - First-come-first-served is expected behavior
 - No loss of funds, just unavailability
 
 **Mitigation for Production**:
+
 - [ ] Per-user deposit limits
 - [ ] Queuing mechanism
 - [ ] Dynamic bank cap expansion
@@ -300,11 +326,13 @@ if (totalDepositsUSDC + usdcReceived > bankCapUSD) {
 **Risk Level**: 🟡 **MEDIUM** (Inherent to Public Blockchains)
 
 #### Attack Scenario
+
 MEV bot sees deposit transaction in mempool, front-runs with own deposit to get better swap rate.
 
 #### Inherent Risks
 
 ⚠️ **Public Mempool Exposure**:
+
 - All transactions visible before inclusion
 - Swap rates can change between submission and execution
 - Sandwich attacks on Uniswap swaps
@@ -312,22 +340,26 @@ MEV bot sees deposit transaction in mempool, front-runs with own deposit to get 
 #### Mitigation Implemented
 
 ✅ **Slippage Protection**:
+
 ```solidity
 uint256 amountOutMin = _calculateMinOutput(tokenIn, amountIn);
 // SLIPPAGE_TOLERANCE = 98 (2% max deviation)
 ```
 
 ✅ **Deadline Enforcement**:
+
 ```solidity
 block.timestamp + 900  // 15 minutes
 ```
 
 ⚠️ **Limited Protection**:
+
 - Cannot prevent all MEV extraction
 - Fixed 2% slippage may not suit volatile markets
 - No private transaction pool integration
 
 **Mitigation for Production**:
+
 - [ ] Flashbots/MEV-Boost integration
 - [ ] Commit-reveal scheme for deposits
 - [ ] Dynamic slippage based on order size
@@ -344,6 +376,7 @@ block.timestamp + 900  // 15 minutes
 #### Uniswap V2 Dependency
 
 ⚠️ **Contract Cannot Function Without Uniswap**:
+
 - All deposits (except USDC) require swap
 - If router fails, deposits fail
 - No fallback mechanism
@@ -351,6 +384,7 @@ block.timestamp + 900  // 15 minutes
 **Current State**: Mock router always succeeds (unrealistic)
 
 **Production Risks**:
+
 - Uniswap V2 is immutable but could have low liquidity
 - Router could have bugs (unlikely, battle-tested)
 - Pair could lack liquidity for supported tokens
@@ -358,6 +392,7 @@ block.timestamp + 900  // 15 minutes
 #### Token Dependency
 
 ⚠️ **Non-Standard Token Risks**:
+
 - Tokens with transfer fees (not explicitly blocked)
 - Rebasing tokens (AMPL, etc.)
 - Tokens with blacklist functions (USDC)
@@ -366,12 +401,14 @@ block.timestamp + 900  // 15 minutes
 #### Mitigation Implemented
 
 ✅ **SafeERC20**: All token operations use wrappers
+
 ```solidity
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 using SafeERC20 for IERC20;
 ```
 
 ✅ **Uniswap Pair Validation**: Check pair exists before whitelisting
+
 ```solidity
 function _validateUniswapPair(address token) internal view {
     address[] memory path = new address[](2);
@@ -383,6 +420,7 @@ function _validateUniswapPair(address token) internal view {
 ```
 
 ⚠️ **Needs Enhancement**:
+
 - [ ] Explicit checks for fee-on-transfer tokens
 - [ ] Blacklist for known problematic tokens
 - [ ] Balance verification after transfers
@@ -412,6 +450,7 @@ MockDAI: 0x2a5992928a02Fde2357dF9b2B0404043a67A5765
 #### Issues
 
 ⚠️ **Centralized Mint Functions**:
+
 ```solidity
 // MockUSDC.sol - Anyone can mint unlimited USDC
 function mint(address to, uint256 amount) external {
@@ -420,6 +459,7 @@ function mint(address to, uint256 amount) external {
 ```
 
 ⚠️ **Fixed Exchange Rates**:
+
 ```solidity
 // MockUniswapV2Router.sol
 if (path[0] == weth && path[1] == usdc) {
@@ -450,6 +490,7 @@ address public owner;  // Single point of control
 ```
 
 **Owner Powers**:
+
 1. ✅ Add/remove supported tokens (could rug pull with malicious token)
 2. ✅ Pause deposits (DoS on new deposits)
 3. ❌ Cannot steal user funds (good!)
@@ -462,6 +503,7 @@ address public owner;  // Single point of control
 ✅ **Expected**: Standard pattern for educational projects
 
 ⚠️ **Production Concerns**:
+
 - No community oversight
 - Private key compromise = system compromise
 - No governance process
@@ -477,6 +519,7 @@ address public owner;  // Single point of control
 #### Current State
 
 Contract is **immutable** after deployment:
+
 - No proxy pattern (OpenZeppelin UUPS/Transparent)
 - No migration function
 - Bug fixes require new deployment
@@ -484,11 +527,13 @@ Contract is **immutable** after deployment:
 #### Implications
 
 ✅ **Positive**:
+
 - Trustless (no backdoor upgrades)
 - Users know contract is final
 - No storage collision risks
 
 ⚠️ **Negative**:
+
 - Cannot fix bugs without migration
 - Cannot add features
 - Cannot adapt to changing DeFi landscape
@@ -496,11 +541,13 @@ Contract is **immutable** after deployment:
 #### Example Scenario
 
 If Uniswap V3 becomes the standard:
+
 - Contract cannot be updated to use V3
 - Would require full redeployment
 - Users must migrate balances manually
 
 **Production Recommendation**:
+
 - [ ] OpenZeppelin UUPS proxy for upgradeability
 - [ ] Timelock for upgrade proposals
 - [ ] Community voting on upgrades
@@ -524,20 +571,24 @@ uint256 public immutable bankCapUSD;              // 100,000 USDC fixed
 #### Implications
 
 ⚠️ **2% Slippage May Not Suit All Conditions**:
+
 - High volatility: May need higher tolerance
 - Stable pairs: Could use lower tolerance
 - Large orders: May need dynamic calculation
 
 ⚠️ **Withdrawal Limit Too Restrictive**:
+
 - Large users: Cannot withdraw full balance in one tx
 - Must make multiple transactions (gas cost)
 - No emergency withdrawal mechanism
 
 ⚠️ **Bank Cap Cannot Adjust**:
+
 - Success = hitting cap (cannot grow)
 - Failure = empty vault (cannot reduce)
 
 **Production Recommendation**:
+
 - [ ] Owner-adjustable slippage within bounds
 - [ ] Dynamic withdrawal limits based on user balance
 - [ ] Adjustable bank cap with timelock
@@ -560,15 +611,18 @@ uint256 public immutable bankCapUSD;              // 100,000 USDC fixed
 #### Example Scenario
 
 If malicious token is whitelisted:
+
 - Deposits would swap to malicious token
 - No way to pause or reverse
 - Users stuck with malicious token balance
 
 **Current Mitigation**:
+
 - Careful token vetting before whitelisting
 - Uniswap pair validation
 
 **Production Recommendation**:
+
 - [ ] Emergency pause on withdrawals (owner + timelock)
 - [ ] Token rescue function for accidentally sent tokens
 - [ ] Whitelist removal with mandatory notice period
@@ -584,24 +638,26 @@ If malicious token is whitelisted:
 
 #### Key Differences
 
-| Aspect | Test (Sepolia) | Production (Mainnet) |
-|--------|----------------|----------------------|
-| USDC Supply | Unlimited mint | Limited supply |
+| Aspect            | Test (Sepolia)         | Production (Mainnet)  |
+| ----------------- | ---------------------- | --------------------- |
+| USDC Supply       | Unlimited mint         | Limited supply        |
 | Uniswap Liquidity | Mock (always succeeds) | Real pools (can fail) |
-| Slippage | Simulated | Real impact |
-| Gas Costs | Low Sepolia gas | High mainnet gas |
-| Economic Attacks | Impossible | Profitable |
-| MEV | Minimal | Significant |
+| Slippage          | Simulated              | Real impact           |
+| Gas Costs         | Low Sepolia gas        | High mainnet gas      |
+| Economic Attacks  | Impossible             | Profitable            |
+| MEV               | Minimal                | Significant           |
 
 #### Critical Gap
 
 ⚠️ **Contract Tested in Unrealistic Environment**:
+
 - No real economic incentives to attack
 - No liquidity constraints
 - No MEV bot competition
 - Centralized mock contracts
 
 **Production Deployment Risks**:
+
 1. **Liquidity Failures**: Real Uniswap may not have depth
 2. **Slippage Deviation**: 2% may be too tight
 3. **MEV Extraction**: Sandwich attacks profitable
@@ -609,6 +665,7 @@ If malicious token is whitelisted:
 5. **Economic Attacks**: Unforeseen incentive misalignments
 
 **Recommendation**: Testnet success ≠ mainnet readiness. Requires:
+
 - [ ] Mainnet testnet (fork testing)
 - [ ] Economic simulation
 - [ ] MEV analysis
@@ -633,6 +690,7 @@ If malicious token is whitelisted:
 **42 Tests Across 7 Categories** - All Passing ✅
 
 #### Constructor Tests (6 tests)
+
 ```
 ✅ testConstructor_Success
 ✅ testConstructor_RevertZeroBankCap
@@ -641,9 +699,11 @@ If malicious token is whitelisted:
 ✅ testConstructor_RevertZeroUSDC
 ✅ testConstructor_USDCAutoWhitelisted
 ```
+
 **Coverage**: 100% of constructor logic
 
 #### depositETH Tests (7 tests)
+
 ```
 ✅ testDepositETH_Success
 ✅ testDepositETH_MultipleDeposits
@@ -653,9 +713,11 @@ If malicious token is whitelisted:
 ✅ testDepositETH_RevertBankCapExceeded
 ✅ testDepositETH_SwapRecorded
 ```
+
 **Coverage**: 100% of ETH deposit flows (wrap + swap)
 
 #### deposit Tests (8 tests)
+
 ```
 ✅ testDeposit_USDCDirectSuccess
 ✅ testDeposit_TokenSwapSuccess
@@ -666,9 +728,11 @@ If malicious token is whitelisted:
 ✅ testDeposit_EmitsDepositMadeEvent
 ✅ testDeposit_SwapRecorded
 ```
+
 **Coverage**: 100% of token deposit logic (direct + swap)
 
 #### withdraw Tests (6 tests)
+
 ```
 ✅ testWithdraw_Success
 ✅ testWithdraw_RevertInsufficientBalance
@@ -677,9 +741,11 @@ If malicious token is whitelisted:
 ✅ testWithdraw_EmitsWithdrawalMadeEvent
 ✅ testWithdraw_UpdatesState
 ```
+
 **Coverage**: 100% of withdrawal logic
 
 #### Admin Tests (9 tests)
+
 ```
 ✅ testAddSupportedToken_Success
 ✅ testAddSupportedToken_RevertNotOwner
@@ -691,23 +757,28 @@ If malicious token is whitelisted:
 ✅ testUnpauseDeposits_Success
 ✅ testUnpauseDeposits_RevertNotOwner
 ```
+
 **Coverage**: 100% of admin functions
 
 #### View Tests (3 tests)
+
 ```
 ✅ testGetVaultBalance
 ✅ testGetRemainingCapacity
 ✅ testIsTokenSupported
 ```
+
 **Coverage**: 100% of view functions
 
 #### Security Tests (4 tests)
+
 ```
 ✅ test_Security_BankCapBoundary
 ✅ test_Security_WithdrawalLimit
 ✅ test_Security_ConcurrentOperations
 ✅ test_Security_ReentrancyProtection
 ```
+
 **Coverage**: Key security scenarios tested
 
 ### 4.3 Uncovered Branches (6.25%)
@@ -717,10 +788,12 @@ If malicious token is whitelisted:
 #### Analysis of Uncovered Branches
 
 Likely uncovered:
+
 1. **Swap output validation edge case**: If `_swapToUSDC` returns 0 (cannot happen with mock)
 2. **Token approval failure edge case**: If `forceApprove` fails (cannot happen with mock)
 
 **Impact**: 🟢 **LOW**
+
 - Edge cases that cannot occur with current mock contracts
 - Would be tested with real Uniswap integration
 - Not security-critical (would revert safely)
@@ -730,6 +803,7 @@ Likely uncovered:
 ### 4.4 Test Quality Assessment
 
 ✅ **Strengths**:
+
 - Comprehensive positive path testing
 - All revert conditions tested
 - Event emission verified
@@ -738,12 +812,14 @@ Likely uncovered:
 - Mock contracts realistic
 
 ⚠️ **Gaps**:
+
 - No fuzzing tests (Foundry invariant testing)
 - No multi-user concurrent stress tests
 - Limited gas cost benchmarks
 - No edge case for extremely large numbers
 
 **Production Recommendation**:
+
 - [ ] Fuzz testing with random inputs (Echidna/Foundry)
 - [ ] Formal verification of critical invariants
 - [ ] Gas optimization benchmarking
@@ -760,6 +836,7 @@ Likely uncovered:
 **Rating**: 🟢 **HIGH** (Production Patterns)
 
 ✅ **Excellent Practices**:
+
 - NatSpec documentation on all public interfaces
 - Custom errors for gas efficiency
 - Modifiers-only validation (Module 4 pattern)
@@ -770,6 +847,7 @@ Likely uncovered:
 - Comprehensive event logging
 
 ✅ **Clean Architecture**:
+
 - Clear separation of concerns
 - Minimal code duplication
 - Logical function organization
@@ -777,6 +855,7 @@ Likely uncovered:
 - Appropriate use of immutable/constant
 
 ⚠️ **Minor Gaps**:
+
 - Some complex functions could be refactored (e.g., `_swapToUSDC`)
 - Limited inline comments (relies on NatSpec)
 
@@ -796,6 +875,7 @@ Likely uncovered:
 ✅ **Security Tests**: Reentrancy, concurrent ops, DoS
 
 ⚠️ **Production Gaps**:
+
 - No fuzzing/invariant testing
 - No formal verification
 - No gas benchmarking suite
@@ -810,6 +890,7 @@ Likely uncovered:
 **Rating**: 🟢 **HIGH** (Complete Documentation)
 
 ✅ **Technical Documentation**:
+
 - PRD.md (complete technical specifications)
 - README.md (comprehensive user guide)
 - DEPLOYMENT.md (deployment details)
@@ -818,18 +899,21 @@ Likely uncovered:
 - .github/copilot-instructions.md (AI assistant rules)
 
 ✅ **Code Documentation**:
+
 - NatSpec on all public/external functions
 - Event documentation
 - Error documentation
 - Modifier documentation
 
 ✅ **Deployment Documentation**:
+
 - All contract addresses with Etherscan links
 - Configuration parameters
 - Testing instructions
 - Usage examples
 
 ⚠️ **Production Gaps**:
+
 - No formal audit report (expected)
 - No incident response plan
 - No upgrade migration guide
@@ -843,6 +927,7 @@ Likely uncovered:
 **Rating**: 🟡 **MEDIUM** (Good Foundation, Not Audited)
 
 ✅ **Ready for Audit**:
+
 - 99% test coverage
 - Clean codebase
 - Complete documentation
@@ -851,6 +936,7 @@ Likely uncovered:
 - Comprehensive threat analysis (this document)
 
 ❌ **Not Audit-Ready for Production**:
+
 - Uses mock contracts (not real DeFi)
 - Educational scope (not production scope)
 - Limited economic modeling
@@ -868,6 +954,7 @@ Likely uncovered:
 #### Educational Context ✅
 
 **Suitable For**:
+
 - Module 5 Final Exam submission ✅
 - Portfolio demonstration ✅
 - Learning DeFi development ✅
@@ -877,6 +964,7 @@ Likely uncovered:
 #### Production Deployment ❌
 
 **Not Suitable For**:
+
 - Mainnet deployment with real funds ❌
 - Public vault service ❌
 - Production DeFi protocol ❌
@@ -884,21 +972,22 @@ Likely uncovered:
 
 #### Gap Analysis
 
-| Requirement | Status | Gap |
-|-------------|--------|-----|
-| Smart Contract Code | ✅ DONE | None |
-| Test Coverage | ✅ DONE | None |
-| Documentation | ✅ DONE | None |
-| Professional Audit | ❌ MISSING | Critical |
+| Requirement              | Status     | Gap      |
+| ------------------------ | ---------- | -------- |
+| Smart Contract Code      | ✅ DONE    | None     |
+| Test Coverage            | ✅ DONE    | None     |
+| Documentation            | ✅ DONE    | None     |
+| Professional Audit       | ❌ MISSING | Critical |
 | Real Uniswap Integration | ❌ MISSING | Critical |
-| Multi-sig Owner | ❌ MISSING | High |
-| Upgrade Mechanism | ❌ MISSING | High |
-| Economic Modeling | ❌ MISSING | High |
-| Mainnet Fork Testing | ❌ MISSING | Medium |
-| Insurance/Safety Fund | ❌ MISSING | Medium |
-| Bug Bounty Program | ❌ MISSING | Medium |
+| Multi-sig Owner          | ❌ MISSING | High     |
+| Upgrade Mechanism        | ❌ MISSING | High     |
+| Economic Modeling        | ❌ MISSING | High     |
+| Mainnet Fork Testing     | ❌ MISSING | Medium   |
+| Insurance/Safety Fund    | ❌ MISSING | Medium   |
+| Bug Bounty Program       | ❌ MISSING | Medium   |
 
 **Estimated Time to Production**: 6-12 months with:
+
 - Professional security audit (2-3 months)
 - Real Uniswap integration (1 month)
 - Mainnet fork testing (1 month)
@@ -908,6 +997,7 @@ Likely uncovered:
 - Insurance fund (3-6 months)
 
 **Estimated Cost**: $100,000 - $300,000 USD
+
 - Audit: $30,000 - $100,000
 - Development: $50,000 - $150,000
 - Insurance: $20,000 - $50,000
@@ -921,18 +1011,21 @@ Likely uncovered:
 **Priority**: 🔴 **CRITICAL**
 
 1. **Professional Security Audit** ($30k-$100k)
+
    - Engage Trail of Bits, OpenZeppelin, or Consensys Diligence
    - Full code review + economic modeling
    - Minimum 4-6 weeks engagement
    - Address all findings before launch
 
 2. **Real Uniswap Integration**
+
    - Remove mock contracts
    - Test against real Uniswap V2 on mainnet fork
    - Validate slippage protection under real conditions
    - Test with various liquidity depths
 
 3. **Multi-Sig Owner** (Gnosis Safe)
+
    - 3-of-5 or 5-of-7 multi-sig
    - Include team members, advisors, community representatives
    - Document signing process
@@ -951,17 +1044,20 @@ Likely uncovered:
 **Priority**: 🟡 **HIGH**
 
 5. **Upgrade to Proxy Pattern**
+
    - Implement OpenZeppelin UUPS proxy
    - Add timelock for upgrades (24-48 hours)
    - Document upgrade process
    - Test migration scenarios
 
 6. **Dynamic Slippage**
+
    - Allow user-specified slippage (within bounds)
    - Default: 2%, Max: 10%
    - Event logging for high slippage swaps
 
 7. **Emergency Functions**
+
    - Emergency pause for withdrawals (multi-sig + timelock)
    - Token rescue for accidentally sent tokens
    - Circuit breaker for extreme conditions
@@ -979,17 +1075,20 @@ Likely uncovered:
 **Priority**: 🟡 **MEDIUM**
 
 9. **Oracle Integration**
+
    - Add Chainlink price feeds as backup oracle
    - Compare Uniswap vs Chainlink prices
    - Revert if deviation > 5%
 
 10. **Economic Protections**
+
     - Per-user deposit limits
     - Deposit queuing mechanism
     - Dynamic bank cap adjustment
     - Withdrawal cooldown period
 
 11. **Gas Optimizations**
+
     - Further storage packing
     - Batch operations support
     - Layer 2 deployment consideration
@@ -1006,16 +1105,19 @@ Likely uncovered:
 **Priority**: 🟢 **LOW** (Nice to Have)
 
 13. **Multi-DEX Support**
+
     - Aggregate liquidity (Uniswap + Sushiswap + Curve)
     - Auto-route to best price
     - Reduce slippage on large orders
 
 14. **Yield Optimization**
+
     - Auto-compound USDC to Aave/Compound
     - Generate yield on idle deposits
     - Share yield with depositors
 
 15. **Cross-Chain Support**
+
     - Deploy to multiple chains
     - Bridge integration
     - Unified liquidity
@@ -1034,6 +1136,7 @@ Likely uncovered:
 #### Strengths for Portfolio
 
 ✅ **Demonstrates Professional Skills**:
+
 - Smart contract development (Solidity 0.8.24)
 - DeFi protocol integration (Uniswap V2)
 - Comprehensive testing (99% coverage)
@@ -1042,6 +1145,7 @@ Likely uncovered:
 - Deployment & verification
 
 ✅ **Exceeds Module 5 Requirements**:
+
 - Real protocol composability ✅
 - Production security patterns ✅
 - 50%+ test coverage ✅ (achieved 99%)
@@ -1049,6 +1153,7 @@ Likely uncovered:
 - Deployed & verified ✅
 
 ✅ **Portfolio-Ready**:
+
 - GitHub showcase potential
 - Interview technical discussion material
 - Code review demonstration
@@ -1057,6 +1162,7 @@ Likely uncovered:
 #### Known Educational Limitations
 
 ✅ **Acknowledged**:
+
 - Mock contracts for testing environment
 - Not professionally audited
 - Centralized ownership
@@ -1072,6 +1178,7 @@ Likely uncovered:
 ### Summary
 
 **KipuBank V3** is a **well-architected educational DeFi project** that demonstrates:
+
 - ✅ Strong understanding of smart contract security
 - ✅ Professional development practices
 - ✅ Real DeFi protocol integration
@@ -1091,6 +1198,7 @@ Likely uncovered:
 #### ✅ **For Educational Use** (Current State)
 
 **APPROVED** for:
+
 - Module 5 Final Exam submission
 - Portfolio demonstration
 - Technical interviews
@@ -1099,6 +1207,7 @@ Likely uncovered:
 #### ❌ **For Production Use** (Future State)
 
 **NOT RECOMMENDED** without:
+
 - Professional security audit ($30k-$100k)
 - Real Uniswap integration + mainnet fork testing
 - Multi-sig ownership + timelock
