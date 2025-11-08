@@ -150,3 +150,8 @@ lib/
 
 # github instructions file
 .github/*
+
+# Deployment information
+DEPLOYMENT.md
+
+# Threat Analysis
