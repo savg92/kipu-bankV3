@@ -31,5 +31,5 @@ interface IUniswapV2Router02 {
 
     /// @notice Returns the address of the WETH contract
     /// @return The WETH contract address
-    function WETH() external pure returns (address);
+    function WETH() external view returns (address);
 }

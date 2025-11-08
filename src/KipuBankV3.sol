@@ -73,14 +73,21 @@ contract KipuBankV3 is Ownable, ReentrancyGuard {
     /// @param tokenAmount The amount of token deposited
     /// @param usdcReceived The amount of USDC received after swap
     event DepositMade(
-        address indexed user, address indexed token, uint256 tokenAmount, uint256 usdcReceived
+        address indexed user,
+        address indexed token,
+        uint256 tokenAmount,
+        uint256 usdcReceived
     );
 
     /// @notice Emitted when a token is swapped to USDC
     /// @param token The token that was swapped
     /// @param amountIn The amount of token swapped
     /// @param usdcOut The amount of USDC received
-    event TokenSwapped(address indexed token, uint256 amountIn, uint256 usdcOut);
+    event TokenSwapped(
+        address indexed token,
+        uint256 amountIn,
+        uint256 usdcOut
+    );
 
     /// @notice Emitted when a withdrawal is successfully processed
     /// @param user The address of the withdrawer
@@ -195,8 +202,10 @@ contract KipuBankV3 is Ownable, ReentrancyGuard {
     ) Ownable(msg.sender) {
         // Validate constructor parameters
         if (
-            _bankCapUSD == 0 || _maxWithdrawPerTx == 0 || _uniswapV2Router == address(0)
-                || _usdc == address(0)
+            _bankCapUSD == 0 ||
+            _maxWithdrawPerTx == 0 ||
+            _uniswapV2Router == address(0) ||
+            _usdc == address(0)
         ) {
             revert InvalidParameter();
         }
@@ -253,7 +262,10 @@ contract KipuBankV3 is Ownable, ReentrancyGuard {
     /// @param amount The amount of tokens to deposit
     /// @dev If token is USDC, no swap occurs. Otherwise swaps via Uniswap V2
     /// @dev Emits DepositMade event on success, reverts if bank cap exceeded or swap fails
-    function deposit(address token, uint256 amount)
+    function deposit(
+        address token,
+        uint256 amount
+    )
         external
         nonReentrant
         whenNotPaused
@@ -297,7 +309,9 @@ contract KipuBankV3 is Ownable, ReentrancyGuard {
     /// @param usdcAmount The amount of USDC to withdraw (with 6 decimals)
     /// @dev Withdrawals are always enabled (not affected by pause state)
     /// @dev Emits WithdrawalMade event on success, reverts if insufficient balance or limit exceeded
-    function withdraw(uint256 usdcAmount)
+    function withdraw(
+        uint256 usdcAmount
+    )
         external
         nonReentrant
         validAmount(usdcAmount)
@@ -377,7 +391,9 @@ contract KipuBankV3 is Ownable, ReentrancyGuard {
     /// @notice Returns the number of withdrawals made by a user
     /// @param user The address to query
     /// @return The withdrawal count
-    function getUserWithdrawalCount(address user) external view returns (uint256) {
+    function getUserWithdrawalCount(
+        address user
+    ) external view returns (uint256) {
         return withdrawalCount[user];
     }
 
@@ -412,17 +428,20 @@ contract KipuBankV3 is Ownable, ReentrancyGuard {
     /// @return usdcReceived The amount of USDC received from the swap
     /// @dev Approves exact amount → swaps → resets approval to 0 (security pattern)
     /// @dev Uses 2% slippage tolerance and 15-minute deadline
-    function _swapToUSDC(address tokenIn, uint256 amountIn)
-        internal
-        returns (uint256 usdcReceived)
-    {
+    function _swapToUSDC(
+        address tokenIn,
+        uint256 amountIn
+    ) internal returns (uint256 usdcReceived) {
         // Build swap path: tokenIn → USDC
         address[] memory path = new address[](2);
         path[0] = tokenIn;
         path[1] = usdc;
 
         // 1. Approve exact amount only (security: avoid infinite approval)
-        IERC20(tokenIn).safeIncreaseAllowance(address(uniswapV2Router), amountIn);
+        IERC20(tokenIn).safeIncreaseAllowance(
+            address(uniswapV2Router),
+            amountIn
+        );
 
         // 2. Calculate minimum output with slippage protection
         uint256 amountOutMin = _calculateMinOutput(tokenIn, amountIn);
@@ -442,7 +461,8 @@ contract KipuBankV3 is Ownable, ReentrancyGuard {
         if (usdcReceived == 0) revert ZeroSwapOutput();
 
         // 5. Reset approval to 0 (security best practice)
-        IERC20(tokenIn).safeDecreaseAllowance(address(uniswapV2Router), amountIn);
+        // Note: Router consumes exact allowance, so we explicitly set to 0
+        IERC20(tokenIn).forceApprove(address(uniswapV2Router), 0);
 
         emit TokenSwapped(tokenIn, amountIn, usdcReceived);
     }
@@ -452,16 +472,18 @@ contract KipuBankV3 is Ownable, ReentrancyGuard {
     /// @param amountIn The amount of tokenIn to swap
     /// @return minOutput The minimum acceptable USDC output (98% of expected)
     /// @dev Uses Uniswap's getAmountsOut to estimate output, applies 2% slippage
-    function _calculateMinOutput(address tokenIn, uint256 amountIn)
-        internal
-        view
-        returns (uint256 minOutput)
-    {
+    function _calculateMinOutput(
+        address tokenIn,
+        uint256 amountIn
+    ) internal view returns (uint256 minOutput) {
         address[] memory path = new address[](2);
         path[0] = tokenIn;
         path[1] = usdc;
 
-        uint256[] memory amounts = uniswapV2Router.getAmountsOut(amountIn, path);
+        uint256[] memory amounts = uniswapV2Router.getAmountsOut(
+            amountIn,
+            path
+        );
         uint256 expectedOutput = amounts[1];
 
         // Apply slippage tolerance: 98% of expected output
@@ -478,7 +500,9 @@ contract KipuBankV3 is Ownable, ReentrancyGuard {
         path[0] = token;
         path[1] = usdc;
 
-        try uniswapV2Router.getAmountsOut(1e18, path) returns (uint256[] memory) {
+        try uniswapV2Router.getAmountsOut(1e18, path) returns (
+            uint256[] memory
+        ) {
             // Pair exists and has liquidity
         } catch {
             revert InvalidUniswapPair();
