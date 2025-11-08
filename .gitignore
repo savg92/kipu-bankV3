@@ -1,0 +1,119 @@
+# macOS
+.DS_Store
+.AppleDouble
+._*
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Node
+node_modules/
+dist/
+build/
+/.pnp
+.pnp.js
+package-lock.json
+npm-shrinkwrap.json
+.yarn-integrity
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+/.yarn/cache
+
+# pnpm
+pnpm-lock.yaml
+node_modules/
+
+# Environment files
+.env
+.env.*.local
+.env.local
+
+# Python
+__pycache__/
+*.py[cod]
+*.so
+*.egg-info/
+dist/
+build/
+venv/
+.venv/
+env/
+ENV/
+pip-wheel-metadata/
+.pytest_cache/
+
+# Byte-compiled / optimized / DLL files
+*.pyc
+*.pyo
+*.pyd
+
+# Hardhat
+artifacts/
+cache/
+typechain-types/
+
+# Hardhat Ignition deployments (all chains - document addresses in README)
+ignition/deployments/
+
+# Foundry
+out/
+cache_hardhat/
+broadcast/
+
+# Legacy Hardhat Files (not using Hardhat)
+hardhat.config.js
+ignition/
+scripts/
+src/Counter.sol
+test/Counter.t.sol
+script/Counter.s.sol
+
+# IDEs and editors
+.vscode/
+.history/
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Swap / temporary files
+*~
+*.swp
+*.swo
+
+# Coverage
+.coverage
+coverage/
+htmlcov/
+
+# System files
+Thumbs.db
+ehthumbs.db
+Icon?
+
+# macOS Finder tags
+.DS_Store
+
+# Project planning documents (kept local, not in repo)
+Guide.md
+PRD.md
+plan.md
+
+# Lock files (npm handles package-lock.json automatically)
+# Uncomment if using yarn or pnpm:
+# yarn.lock
+# pnpm-lock.yaml
+
+# .github folder and its contents
+.github/
+.github/*
+.github/workflows/
+
+# Ignore vendored Foundry libraries if using `forge install`
+lib/forge-std/
