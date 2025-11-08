@@ -460,8 +460,6 @@ Test suite includes comprehensive mocks:
 ⚠️ **No Emergency Withdraw** - Owner cannot withdraw user funds
 ⚠️ **Uniswap Dependency** - Relies on external DEX availability
 
-📄 **Full security analysis**: See [THREAT_ANALYSIS.md](./THREAT_ANALYSIS.md)
-
 ### Audit Status
 
 - ❌ **Not Audited** - Educational project
