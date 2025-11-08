@@ -63,13 +63,23 @@ ignition/deployments/
 
 # Foundry
 out/
+cache/
 cache_hardhat/
 broadcast/
+*.sol.artifacts.json
 
-# Legacy Hardhat Files (not using Hardhat)
+# Foundry test cache
+.forge-snapshots/
+cache_forge/
+
+# Legacy Hardhat Files (not using Hardhat - keep for reference)
 hardhat.config.js
 ignition/
 scripts/
+artifacts/
+typechain-types/
+
+# Example/Counter files from Foundry init (remove once V3 is implemented)
 src/Counter.sol
 test/Counter.t.sol
 script/Counter.s.sol
@@ -87,10 +97,12 @@ script/Counter.s.sol
 *.swp
 *.swo
 
-# Coverage
+# Coverage reports
 .coverage
 coverage/
+coverage.json
 htmlcov/
+lcov.info
 
 # System files
 Thumbs.db
@@ -100,20 +112,41 @@ Icon?
 # macOS Finder tags
 .DS_Store
 
-# Project planning documents (kept local, not in repo)
+# Environment variables (CRITICAL - never commit private keys!)
+.env
+.env.local
+.env.*.local
+*.env
+
+# Deployment addresses (document in README instead)
+deployments.json
+addresses.json
+
+# Gas reports
+gas-report.txt
+.gas-snapshot
+
+# Slither/Security analysis outputs
+slither-report.json
+slither-report.txt
+
+# Documentation (Keep in repo - these are essential for V3!)
 Guide.md
 PRD.md
 plan.md
+# README.md
+# THREAT_ANALYSIS.md
 
-# Lock files (npm handles package-lock.json automatically)
-# Uncomment if using yarn or pnpm:
-# yarn.lock
+# Lock files
+package-lock.json
+yarn.lock
 # pnpm-lock.yaml
 
-# .github folder and its contents
-.github/
-.github/*
-.github/workflows/
+# Foundry libraries (managed by forge)
+lib/
 
-# Ignore vendored Foundry libraries if using `forge install`
-lib/forge-std/
+# Keep only specific lib folders if needed
+!lib/.gitkeep
+
+# github instructions file
+.github/*
