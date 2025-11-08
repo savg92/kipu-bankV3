@@ -33,20 +33,21 @@
 
 ### Evolution: V2 → V3
 
-| Feature | V2 | V3 |
-|---------|----|----|
-| Token Storage | Multi-token mapping | USDC-only (simplified) |
-| Price Oracle | Chainlink | Uniswap V2 (market rate) |
-| Supported Tokens | Fixed whitelist | Any Uniswap pair |
-| Withdrawals | Any whitelisted token | USDC only |
-| Complexity | Higher (oracle + multi-token) | Lower (unified currency) |
-| DeFi Integration | None | Uniswap V2 Router |
+| Feature          | V2                            | V3                       |
+| ---------------- | ----------------------------- | ------------------------ |
+| Token Storage    | Multi-token mapping           | USDC-only (simplified)   |
+| Price Oracle     | Chainlink                     | Uniswap V2 (market rate) |
+| Supported Tokens | Fixed whitelist               | Any Uniswap pair         |
+| Withdrawals      | Any whitelisted token         | USDC only                |
+| Complexity       | Higher (oracle + multi-token) | Lower (unified currency) |
+| DeFi Integration | None                          | Uniswap V2 Router        |
 
 ---
 
 ## 🆕 What's New in V3
 
 ### 1. Uniswap V2 Integration
+
 ```solidity
 // Automatic ETH → USDC swap
 function depositETH() external payable {
@@ -57,6 +58,7 @@ function depositETH() external payable {
 ```
 
 ### 2. Simplified USDC Accounting
+
 ```solidity
 // V2: Multi-token balances
 mapping(address => mapping(address => uint256)) private balances;
@@ -66,12 +68,14 @@ mapping(address => uint256) private balances;
 ```
 
 ### 3. Protocol Composability
+
 - Real DEX integration (Uniswap V2)
 - Market-driven exchange rates
 - Slippage protection (2%)
 - Deadline enforcement (15 minutes)
 
 ### 4. Enhanced Security Patterns
+
 - ✅ Checks-Effects-Interactions (CEI) with swaps
 - ✅ Safe approval management (forceApprove)
 - ✅ Slippage protection on all swaps
@@ -85,16 +89,19 @@ mapping(address => uint256) private balances;
 ### Core Functionality
 
 #### Multi-Token Deposits
+
 - **ETH Deposits**: Automatically wraps to WETH → swaps to USDC
 - **USDC Direct**: No swap needed, direct credit
 - **ERC-20 Tokens**: Any Uniswap-supported token → USDC
 
 #### USDC Withdrawals
+
 - Single currency withdrawals (USDC only)
 - Maximum 1,000 USDC per transaction
 - Instant processing with reentrancy protection
 
 #### Admin Controls
+
 - Add/remove supported tokens (with Uniswap validation)
 - Pause/unpause deposits (emergency control)
 - Owner-only access (Ownable)
@@ -178,8 +185,8 @@ graph LR
 ### Swap Mechanism
 
 ```solidity
-function _swapToUSDC(address tokenIn, uint256 amountIn) 
-    internal returns (uint256 usdcReceived) 
+function _swapToUSDC(address tokenIn, uint256 amountIn)
+    internal returns (uint256 usdcReceived)
 {
     // 1. Build swap path
     address[] memory path = new address[](2);
@@ -216,17 +223,17 @@ function _swapToUSDC(address tokenIn, uint256 amountIn)
 
 ### Sepolia Testnet - Fully Verified
 
-| Contract | Address | Etherscan |
-|----------|---------|-----------|
-| **KipuBankV3** | `0x3EE835258168167591C454e95C80a54D2d0AB3d7` | [View](https://sepolia.etherscan.io/address/0x3ee835258168167591c454e95c80a54d2d0ab3d7) |
-| MockUSDC | `0x7343411e627592C3353039bb0C7b435A2Af43571` | [View](https://sepolia.etherscan.io/address/0x7343411e627592c3353039bb0c7b435a2af43571) |
-| MockWETH | `0x8C24EbB84190d63e7d2A842c7E05369eF3E2eb62` | [View](https://sepolia.etherscan.io/address/0x8c24ebb84190d63e7d2a842c7e05369ef3e2eb62) |
+| Contract            | Address                                      | Etherscan                                                                               |
+| ------------------- | -------------------------------------------- | --------------------------------------------------------------------------------------- |
+| **KipuBankV3**      | `0x3EE835258168167591C454e95C80a54D2d0AB3d7` | [View](https://sepolia.etherscan.io/address/0x3ee835258168167591c454e95c80a54d2d0ab3d7) |
+| MockUSDC            | `0x7343411e627592C3353039bb0C7b435A2Af43571` | [View](https://sepolia.etherscan.io/address/0x7343411e627592c3353039bb0c7b435a2af43571) |
+| MockWETH            | `0x8C24EbB84190d63e7d2A842c7E05369eF3E2eb62` | [View](https://sepolia.etherscan.io/address/0x8c24ebb84190d63e7d2a842c7e05369ef3e2eb62) |
 | MockUniswapV2Router | `0xa0E06dDE9c795EDFD9D6dEaE573BbeF1Ddb9880c` | [View](https://sepolia.etherscan.io/address/0xa0e06dde9c795edfd9d6deae573bbef1ddb9880c) |
-| MockDAI | `0x2a5992928a02Fde2357dF9b2B0404043a67A5765` | [View](https://sepolia.etherscan.io/address/0x2a5992928a02fde2357df9b2b0404043a67a5765) |
+| MockDAI             | `0x2a5992928a02Fde2357dF9b2B0404043a67A5765` | [View](https://sepolia.etherscan.io/address/0x2a5992928a02fde2357df9b2b0404043a67a5765) |
 
 **Network:** Sepolia (Chain ID: 11155111)  
 **Block:** 9588185  
-**Total Gas:** 0.00627842 ETH  
+**Total Gas:** 0.00627842 ETH
 
 ### Configuration
 
@@ -404,6 +411,7 @@ forge coverage --report lcov
 ### Mock Contracts
 
 Test suite includes comprehensive mocks:
+
 - `MockWETH`: WETH wrapping/unwrapping
 - `MockUSDC`: 6-decimal USDC token
 - `MockERC20`: Generic token (DAI)
@@ -416,24 +424,29 @@ Test suite includes comprehensive mocks:
 ### Security Patterns
 
 ✅ **Checks-Effects-Interactions (CEI)**
+
 - All state updates after external calls
 - Bank cap validated after swap output known
 
 ✅ **Reentrancy Protection**
+
 - ReentrancyGuard on all state-changing functions
 - CEI pattern as secondary defense
 
 ✅ **Safe Token Operations**
+
 - SafeERC20 for all token transfers
 - forceApprove for approval management
 - Balance verification after swaps
 
 ✅ **Input Validation**
+
 - Modifiers-only validation (no inline checks)
 - Custom errors for gas efficiency
 - Comprehensive parameter checks
 
 ✅ **Uniswap Security**
+
 - Slippage protection (2%)
 - Deadline enforcement (15 min)
 - Approval reset after swaps
@@ -518,247 +531,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 📞 Support
 
 For issues or questions:
+
 - Review the [test suite](./test/KipuBankV3.t.sol) for usage examples
 - Open an issue on [GitHub](https://github.com/savg92/kipu-bankV3/issues)
 
 ---
 
 **⭐ If you find this project useful, please star it on GitHub!**
-├── Multi-token support (ETH + ERC-20 whitelist)
-├── USD-denominated accounting (6 decimal normalization)
-├── Real-time price feeds (Chainlink oracles)
-├── Role-based access control (Ownable)
-└── Advanced security (ReentrancyGuard, SafeERC20)
-```
-
-### 🔗 Interact with Contract
-
-**Option 1: Etherscan Interface** (Recommended for beginners)
-
-1. Visit the [Contract on Etherscan](https://sepolia.etherscan.io/address/0xe1b858d11bbbd3565a883a83352521765645b19f)
-2. Go to **"Read Contract"** tab to query balances and settings
-3. Go to **"Write Contract"** tab to deposit/withdraw (requires connected wallet with Sepolia ETH)
-
-## 💻 Usage Examples
-
-### Deposit ETH (Using cast)
-
-```bash
-# Deposit 0.1 ETH to your vault
-cast send 0xe1b858d11bbbd3565a883a83352521765645b19f \
-  "deposit(address,uint256)" \
-  "0x0000000000000000000000000000000000000000" \
-  "100000000000000000" \
-  --value 0.1ether \
-  --rpc-url sepolia \
-  --private-key $PRIVATE_KEY
-```
-
-**Parameters**:
-
-- `token`: `0x0000000000000000000000000000000000000000` (ETH address, not applicable for ETH)
-- `amount`: `100000000000000000` (amount in wei, must match `--value`)
-- `--value`: ETH to deposit (0.1 ETH in this example)
-
-### Check Your Balance
-
-```bash
-# Query your vault balance for ETH
-cast call 0xe1b858d11bbbd3565a883a83352521765645b19f \
-  "getVaultBalance(address,address)(uint256)" \
-  "YOUR_ADDRESS" \
-  "0x0000000000000000000000000000000000000000" \
-  --rpc-url sepolia
-```
-
-**Returns**: Your ETH balance in wei (6-decimal USDC-normalized value)
-
-### Withdraw ETH
-
-```bash
-# Withdraw 0.05 ETH from your vault
-cast send 0xe1b858d11bbbd3565a883a83352521765645b19f \
-  "withdraw(address,uint256)" \
-  "0x0000000000000000000000000000000000000000" \
-  "50000000000000000" \
-  --rpc-url sepolia \
-  --private-key $PRIVATE_KEY
-```
-
-### Check Bank Status
-
-```bash
-# Get current bank cap in USD
-cast call 0xe1b858d11bbbd3565a883a83352521765645b19f \
-  "bankCapUSD()(uint256)" \
-  --rpc-url sepolia
-
-# Get total deposits in USD
-cast call 0xe1b858d11bbbd3565a883a83352521765645b19f \
-  "totalDepositsUSD()(uint256)" \
-  --rpc-url sepolia
-
-# Get current ETH price in USD
-cast call 0xe1b858d11bbbd3565a883a83352521765645b19f \
-  "getLatestETHPrice()(int256)" \
-  --rpc-url sepolia
-```
-
-## 🛠️ Development & Testing
-
-### Prerequisites
-
-```bash
-# Install Foundry (if not already installed)
-curl -L https://foundry.paradigm.xyz | bash
-foundryup
-
-# Clone and install dependencies
-git clone https://github.com/savg92/kipu-bankV2.git
-cd kipu-bankV2
-forge install
-```
-
-### Build
-
-```bash
-# Compile all contracts
-forge build
-
-# Compile with optimizer settings
-forge build --optimize
-```
-
-### Test
-
-```bash
-# Run all tests with verbose output
-forge test -vv
-
-# Run specific test
-forge test --match-test testDepositETH -vv
-
-# Generate gas report
-forge test --gas-report
-```
-
-### Format Code
-
-```bash
-# Format Solidity files
-forge fmt
-
-# Check formatting without modifying
-forge fmt --check
-```
-
-### Deploy Locally (Anvil)
-
-```bash
-# Terminal 1: Start local blockchain
-anvil
-
-# Terminal 2: Deploy contract
-forge script script/DeployKipuBankV2.s.sol \
-  --rpc-url http://localhost:8545 \
-  --broadcast \
-  --private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb476cad82b3cd5e4f002b2fdbf7e
-```
-
-### Deploy to Sepolia
-
-```bash
-# Prerequisites: Set environment variables
-export PRIVATE_KEY=your_sepolia_private_key
-export ETHERSCAN_API_KEY=your_etherscan_api_key
-
-# Deploy and verify
-forge script script/DeployKipuBankV2.s.sol \
-  --rpc-url sepolia \
-  --broadcast \
-  --verify \
-  --etherscan-api-key $ETHERSCAN_API_KEY \
-  --private-key $PRIVATE_KEY
-```
-
-## 🏗️ Project Structure
-
-```
-kipu-bankV2/
-├── src/
-│   └── KipuBankV2.sol            # Main contract (Foundry standard)
-├── script/
-│   └── DeployKipuBankV2.s.sol    # Foundry deployment script
-├── test/
-│   └── KipuBankV2.t.sol          # Comprehensive test suite (43 tests)
-├── lib/
-│   └── forge-std/                # Foundry standard library
-├── foundry.toml                   # Foundry configuration
-└── README.md                      # This file
-```
-
-**Note**: This project uses Foundry's standard directory structure with contracts in `/src/`.
-
-## 🔐 Security Features
-
-### Module 4 Compliance (Production-Grade Patterns)
-
-- ✅ **Modifiers-Only Validation**: All input validation through modifiers (zero inline checks)
-- ✅ **Comprehensive Unchecked Blocks**: All safe arithmetic wrapped for gas optimization
-- ✅ **Zero Redundancy**: No duplicate validation checks
-- ✅ **Single Source Location**: Contract in `/src/` following Foundry standards
-
-### Access Control
-
-- ✅ **Ownable**: Only contract owner can manage token whitelist and emergency controls
-- ✅ **OnlyOwner Modifier**: Restricts administrative functions to owner
-
-### Safe Transfers
-
-- ✅ **SafeERC20**: Safe ERC-20 token transfers with revert handling
-- ✅ **\_safeTransferETH**: Custom ETH transfer with validation
-
-### Reentrancy Protection
-
-- ✅ **ReentrancyGuard**: Prevents reentrancy attacks on deposit/withdraw
-- ✅ **CEI Pattern**: Checks-Effects-Interactions ordering
-
-### Error Handling
-
-- ✅ **Custom Errors Only**: Gas-efficient error codes (no strings)
-- ✅ **15 Custom Errors**: Comprehensive error coverage including context-specific validation
-- ✅ **Stale Price Detection**: Validates Chainlink oracle data freshness
-
-### Validation Architecture
-
-- ✅ **7 Validation Modifiers**: `validDepositAmount`, `validWithdrawalAmount`, `hasBalance`, `withinWithdrawalLimit`, `withinBankCap`, `supportedToken`, `whenNotPaused`
-- ✅ **Clean Function Bodies**: All validation delegated to modifiers
-- ✅ **Single Responsibility**: Each modifier validates one specific concern
-
-### Gas Optimizations
-
-- ✅ **Immutable Variables**: `bankCapUSD`, `MAX_WITHDRAW_PER_TX`, `ethUsdPriceFeed`
-- ✅ **Unchecked Arithmetic**: Safe unchecked operations for gas savings
-- ✅ **Storage Caching**: Minimize state variable reads
-
-## 📊 Testing & Verification
-
-**Test Coverage**: 43/43 tests passing (100% success rate)
-
-```
-Test Categories:
-├── Deployment Tests (3 tests)
-├── Deposit Tests (8 tests)
-├── Withdrawal Tests (6 tests)
-├── Balance Tracking (4 tests)
-├── Multi-Token Tests (5 tests)
-├── Oracle Integration (4 tests)
-├── Access Control (3 tests)
-├── Error Handling (7 tests)
-├── Edge Cases (3 tests)
-└── Gas Optimization Validation (Module 4)
-```
-
-**Gas Optimization**: ~3-5% improvement from unchecked arithmetic after validation
-
-**Verification**: ✅ [Etherscan Verified](https://sepolia.etherscan.io/address/0xe1b858d11bbbd3565a883a83352521765645b19f#code)
