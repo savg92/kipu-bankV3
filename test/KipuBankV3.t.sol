@@ -51,7 +51,10 @@ contract KipuBankV3Test is Test {
         mockUnsupportedToken = new MockERC20("Unsupported Token", "UNSUP", 18);
 
         // Deploy mock Uniswap router
-        mockRouter = new MockUniswapV2Router(address(mockWETH), address(mockUSDC));
+        mockRouter = new MockUniswapV2Router(
+            address(mockWETH),
+            address(mockUSDC)
+        );
 
         // Add DAI to router's supported pairs (DAI/USDC)
         mockRouter.addPair(address(mockDAI), address(mockUSDC));
@@ -99,22 +102,42 @@ contract KipuBankV3Test is Test {
 
     function test_Constructor_RevertIf_ZeroBankCap() public {
         vm.expectRevert(KipuBankV3.InvalidParameter.selector);
-        new KipuBankV3(0, MAX_WITHDRAW_PER_TX, address(mockRouter), address(mockUSDC));
+        new KipuBankV3(
+            0,
+            MAX_WITHDRAW_PER_TX,
+            address(mockRouter),
+            address(mockUSDC)
+        );
     }
 
     function test_Constructor_RevertIf_ZeroMaxWithdraw() public {
         vm.expectRevert(KipuBankV3.InvalidParameter.selector);
-        new KipuBankV3(BANK_CAP_USDC, 0, address(mockRouter), address(mockUSDC));
+        new KipuBankV3(
+            BANK_CAP_USDC,
+            0,
+            address(mockRouter),
+            address(mockUSDC)
+        );
     }
 
     function test_Constructor_RevertIf_ZeroRouterAddress() public {
         vm.expectRevert(KipuBankV3.InvalidParameter.selector);
-        new KipuBankV3(BANK_CAP_USDC, MAX_WITHDRAW_PER_TX, address(0), address(mockUSDC));
+        new KipuBankV3(
+            BANK_CAP_USDC,
+            MAX_WITHDRAW_PER_TX,
+            address(0),
+            address(mockUSDC)
+        );
     }
 
     function test_Constructor_RevertIf_ZeroUSDCAddress() public {
         vm.expectRevert(KipuBankV3.InvalidParameter.selector);
-        new KipuBankV3(BANK_CAP_USDC, MAX_WITHDRAW_PER_TX, address(mockRouter), address(0));
+        new KipuBankV3(
+            BANK_CAP_USDC,
+            MAX_WITHDRAW_PER_TX,
+            address(mockRouter),
+            address(0)
+        );
     }
 
     // ═══════════════════════════════════════════════════════════════════════════════
@@ -128,7 +151,12 @@ contract KipuBankV3Test is Test {
         vm.startPrank(user1);
 
         vm.expectEmit(true, true, false, true);
-        emit KipuBankV3.DepositMade(user1, address(0), depositAmount, expectedUSDC);
+        emit KipuBankV3.DepositMade(
+            user1,
+            address(0),
+            depositAmount,
+            expectedUSDC
+        );
 
         bank.depositETH{value: depositAmount}();
 
@@ -203,7 +231,12 @@ contract KipuBankV3Test is Test {
         mockUSDC.approve(address(bank), depositAmount);
 
         vm.expectEmit(true, true, false, true);
-        emit KipuBankV3.DepositMade(user1, address(mockUSDC), depositAmount, depositAmount);
+        emit KipuBankV3.DepositMade(
+            user1,
+            address(mockUSDC),
+            depositAmount,
+            depositAmount
+        );
 
         bank.deposit(address(mockUSDC), depositAmount);
 
@@ -224,7 +257,11 @@ contract KipuBankV3Test is Test {
         mockDAI.approve(address(bank), depositAmount);
 
         vm.expectEmit(true, true, false, true);
-        emit KipuBankV3.TokenSwapped(address(mockDAI), depositAmount, expectedUSDC);
+        emit KipuBankV3.TokenSwapped(
+            address(mockDAI),
+            depositAmount,
+            expectedUSDC
+        );
 
         bank.deposit(address(mockDAI), depositAmount);
 
@@ -240,7 +277,12 @@ contract KipuBankV3Test is Test {
         mockUnsupportedToken.mint(user1, depositAmount);
         mockUnsupportedToken.approve(address(bank), depositAmount);
 
-        vm.expectRevert(abi.encodeWithSelector(KipuBankV3.TokenNotSupported.selector, address(mockUnsupportedToken)));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                KipuBankV3.TokenNotSupported.selector,
+                address(mockUnsupportedToken)
+            )
+        );
         bank.deposit(address(mockUnsupportedToken), depositAmount);
         vm.stopPrank();
     }
@@ -334,7 +376,10 @@ contract KipuBankV3Test is Test {
         bank.withdraw(withdraw1);
         bank.withdraw(withdraw2);
 
-        assertEq(bank.getVaultBalance(user1), depositAmount - withdraw1 - withdraw2);
+        assertEq(
+            bank.getVaultBalance(user1),
+            depositAmount - withdraw1 - withdraw2
+        );
         assertEq(bank.getUserWithdrawalCount(user1), 2);
         vm.stopPrank();
     }
@@ -554,7 +599,10 @@ contract KipuBankV3Test is Test {
         // Should succeed at exact limit
         bank.withdraw(MAX_WITHDRAW_PER_TX);
 
-        assertEq(bank.getVaultBalance(user1), depositAmount - MAX_WITHDRAW_PER_TX);
+        assertEq(
+            bank.getVaultBalance(user1),
+            depositAmount - MAX_WITHDRAW_PER_TX
+        );
         vm.stopPrank();
     }
 
@@ -591,7 +639,10 @@ contract KipuBankV3Test is Test {
         assertEq(bank.getVaultBalance(user1), user1Deposit - user1Withdrawal); // 9,200 USDC
         assertEq(bank.getVaultBalance(user2), user2Deposit);
         assertEq(bank.getVaultBalance(user3), user3Deposit);
-        assertEq(bank.getTotalDeposits(), user1Deposit + user2Deposit + user3Deposit - user1Withdrawal); // 29,200 USDC
+        assertEq(
+            bank.getTotalDeposits(),
+            user1Deposit + user2Deposit + user3Deposit - user1Withdrawal
+        ); // 29,200 USDC
     }
 
     function test_Reentrancy_Protection() public {
@@ -630,7 +681,11 @@ contract MockUSDC is ERC20 {
 contract MockERC20 is ERC20 {
     uint8 private _decimals;
 
-    constructor(string memory name, string memory symbol, uint8 __decimals) ERC20(name, symbol) {
+    constructor(
+        string memory name,
+        string memory symbol,
+        uint8 __decimals
+    ) ERC20(name, symbol) {
         _decimals = __decimals;
     }
 
@@ -657,28 +712,46 @@ contract MockWETH is IWETH {
         payable(msg.sender).transfer(amount);
     }
 
-    function approve(address spender, uint256 amount) external override returns (bool) {
+    function approve(
+        address spender,
+        uint256 amount
+    ) external override returns (bool) {
         _allowances[msg.sender][spender] = amount;
         return true;
     }
 
-    function transfer(address to, uint256 amount) external override returns (bool) {
+    function transfer(
+        address to,
+        uint256 amount
+    ) external override returns (bool) {
         require(_balances[msg.sender] >= amount, "Insufficient balance");
         _balances[msg.sender] -= amount;
         _balances[to] += amount;
         return true;
     }
 
-    function balanceOf(address account) external view override returns (uint256) {
+    function balanceOf(
+        address account
+    ) external view override returns (uint256) {
         return _balances[account];
     }
 
-    function allowance(address owner, address spender) external view returns (uint256) {
+    function allowance(
+        address owner,
+        address spender
+    ) external view returns (uint256) {
         return _allowances[owner][spender];
     }
 
-    function transferFrom(address from, address to, uint256 amount) external returns (bool) {
-        require(_allowances[from][msg.sender] >= amount, "Insufficient allowance");
+    function transferFrom(
+        address from,
+        address to,
+        uint256 amount
+    ) external returns (bool) {
+        require(
+            _allowances[from][msg.sender] >= amount,
+            "Insufficient allowance"
+        );
         require(_balances[from] >= amount, "Insufficient balance");
 
         _allowances[from][msg.sender] -= amount;
@@ -717,7 +790,10 @@ contract MockUniswapV2Router is IUniswapV2Router02 {
         uint256 /* deadline */
     ) external override returns (uint256[] memory amounts) {
         require(path.length == 2, "Invalid path");
-        require(supportedPairs[keccak256(abi.encodePacked(path[0], path[1]))], "Pair not supported");
+        require(
+            supportedPairs[keccak256(abi.encodePacked(path[0], path[1]))],
+            "Pair not supported"
+        );
 
         // Transfer tokenIn from sender
         IERC20(path[0]).transferFrom(msg.sender, address(this), amountIn);
@@ -748,14 +824,15 @@ contract MockUniswapV2Router is IUniswapV2Router02 {
         amounts[1] = amountOut;
     }
 
-    function getAmountsOut(uint256 amountIn, address[] calldata path)
-        external
-        view
-        override
-        returns (uint256[] memory amounts)
-    {
+    function getAmountsOut(
+        uint256 amountIn,
+        address[] calldata path
+    ) external view override returns (uint256[] memory amounts) {
         require(path.length == 2, "Invalid path");
-        require(supportedPairs[keccak256(abi.encodePacked(path[0], path[1]))], "Pair not supported");
+        require(
+            supportedPairs[keccak256(abi.encodePacked(path[0], path[1]))],
+            "Pair not supported"
+        );
 
         uint256 amountOut;
         if (path[0] == _weth && path[1] == usdc) {
