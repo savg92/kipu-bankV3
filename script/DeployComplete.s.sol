@@ -101,7 +101,7 @@ contract MockUniswapV2Router {
         uint256 amountOut;
         if (path[0] == _weth) {
             // WETH → USDC: 1 ETH = 2000 USDC
-            amountOut = (amountIn * 2000) / 1e18 * 1e6; // Convert 18 decimals to 6
+            amountOut = ((amountIn * 2000) / 1e18) * 1e6; // Convert 18 decimals to 6
         } else {
             // Assume other tokens are 1:1 with USDC (18 decimals → 6 decimals)
             amountOut = amountIn / 1e12; // Convert 18 decimals to 6
@@ -129,7 +129,7 @@ contract MockUniswapV2Router {
         uint256 amountOut;
         if (path[0] == _weth) {
             // WETH → USDC: 1 ETH = 2000 USDC
-            amountOut = (amountIn * 2000) / 1e18 * 1e6;
+            amountOut = ((amountIn * 2000) / 1e18) * 1e6;
         } else {
             // Other tokens 1:1 with USDC
             amountOut = amountIn / 1e12;
@@ -238,7 +238,10 @@ contract DeployComplete is Script {
         console.log("  Max Withdraw/TX:", bank.MAX_WITHDRAW_PER_TX());
         console.log("  WETH Address:", bank.weth());
         console.log("  USDC Address:", bank.usdc());
-        console.log("  USDC Whitelisted:", bank.isTokenSupported(address(usdc)));
+        console.log(
+            "  USDC Whitelisted:",
+            bank.isTokenSupported(address(usdc))
+        );
         console.log("  DAI Whitelisted:", bank.isTokenSupported(address(dai)));
         console.log("  Deposits Paused:", bank.depositsPaused());
         console.log("========================================");
