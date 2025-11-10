@@ -256,7 +256,7 @@ contract KipuBankV3 is Ownable, ReentrancyGuard {
         unchecked {
             uint256 newTotal = currentTotal + usdcReceived;
             if (newTotal > bankCapUSD) revert BankCapExceeded();
-            
+
             // 4. Effects: Update all state in single unchecked block
             balances[msg.sender] += usdcReceived;
             depositCount[msg.sender] += 1;
@@ -299,7 +299,7 @@ contract KipuBankV3 is Ownable, ReentrancyGuard {
         unchecked {
             uint256 newTotal = currentTotal + usdcReceived;
             if (newTotal > bankCapUSD) revert BankCapExceeded();
-            
+
             // 4. Effects: Update all state in single unchecked block
             balances[msg.sender] += usdcReceived;
             depositCount[msg.sender] += 1;
