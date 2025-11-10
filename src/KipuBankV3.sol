@@ -184,6 +184,15 @@ contract KipuBankV3 is Ownable, ReentrancyGuard {
         _;
     }
 
+    /// @notice Validates that adding USDC won't exceed bank capacity
+    /// @param usdcToAdd The USDC amount that will be added
+    modifier withinBankCap(uint256 usdcToAdd) {
+        if (totalDepositsUSDC + usdcToAdd > bankCapUSD) {
+            revert BankCapExceeded();
+        }
+        _;
+    }
+
     // ═══════════════════════════════════════════════════════════════════════════════
     // CONSTRUCTOR
     // ═══════════════════════════════════════════════════════════════════════════════
@@ -242,16 +251,16 @@ contract KipuBankV3 is Ownable, ReentrancyGuard {
         // 2. Interactions: Swap WETH → USDC
         uint256 usdcReceived = _swapToUSDC(weth, msg.value);
 
-        // 3. Checks: Validate bank cap AFTER swap (calculated value check allowed)
-        if (totalDepositsUSDC + usdcReceived > bankCapUSD) {
-            revert BankCapExceeded();
-        }
-
-        // 4. Effects: Update state in unchecked block (CEI pattern)
+        // 3. Checks: Validate bank cap using local variable (single state read)
+        uint256 currentTotal = totalDepositsUSDC;
         unchecked {
+            uint256 newTotal = currentTotal + usdcReceived;
+            if (newTotal > bankCapUSD) revert BankCapExceeded();
+            
+            // 4. Effects: Update all state in single unchecked block
             balances[msg.sender] += usdcReceived;
             depositCount[msg.sender] += 1;
-            totalDepositsUSDC += usdcReceived;
+            totalDepositsUSDC = newTotal;
         }
 
         emit DepositMade(msg.sender, address(0), msg.value, usdcReceived);
@@ -272,12 +281,11 @@ contract KipuBankV3 is Ownable, ReentrancyGuard {
         validAmount(amount)
         supportedToken(token)
     {
-        uint256 usdcReceived;
-
         // 1. Checks: Transfer token from user to contract
         IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
 
         // 2. Conditional swap logic
+        uint256 usdcReceived;
         if (token == usdc) {
             // Direct USDC deposit - no swap needed (gas optimization)
             usdcReceived = amount;
@@ -286,16 +294,16 @@ contract KipuBankV3 is Ownable, ReentrancyGuard {
             usdcReceived = _swapToUSDC(token, amount);
         }
 
-        // 3. Checks: Validate bank cap AFTER swap (calculated value check allowed)
-        if (totalDepositsUSDC + usdcReceived > bankCapUSD) {
-            revert BankCapExceeded();
-        }
-
-        // 4. Effects: Update state in unchecked block (CEI pattern)
+        // 3. Checks: Validate bank cap using local variable (single state read)
+        uint256 currentTotal = totalDepositsUSDC;
         unchecked {
+            uint256 newTotal = currentTotal + usdcReceived;
+            if (newTotal > bankCapUSD) revert BankCapExceeded();
+            
+            // 4. Effects: Update all state in single unchecked block
             balances[msg.sender] += usdcReceived;
             depositCount[msg.sender] += 1;
-            totalDepositsUSDC += usdcReceived;
+            totalDepositsUSDC = newTotal;
         }
 
         emit DepositMade(msg.sender, token, amount, usdcReceived);
@@ -318,14 +326,15 @@ contract KipuBankV3 is Ownable, ReentrancyGuard {
         hasBalance(usdcAmount)
         withinWithdrawalLimit(usdcAmount)
     {
-        // 1. Effects: Update state BEFORE external call (CEI pattern)
+        // Effects: Update state BEFORE external call (CEI pattern)
+        // Modifiers already validated, so all operations are safe for unchecked
         unchecked {
             balances[msg.sender] -= usdcAmount;
             withdrawalCount[msg.sender] += 1;
             totalDepositsUSDC -= usdcAmount;
         }
 
-        // 2. Interactions: Transfer USDC to user
+        // Interactions: Transfer USDC to user
         IERC20(usdc).safeTransfer(msg.sender, usdcAmount);
 
         emit WithdrawalMade(msg.sender, usdcAmount);
